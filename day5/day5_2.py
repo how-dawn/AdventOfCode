@@ -1,5 +1,6 @@
 import copy
-import re
+from multiprocessing import Pool
+
 
 def inputHandler(filePath):
     data = {}
@@ -17,39 +18,46 @@ def inputHandler(filePath):
 
     return data
 
+
 def mapGenerator(data):
     maps = []
     seeds = []
     for k, v in data.items():
         if k == "seeds":
-           seeds = v[0]
-           continue
+            seeds = v[0]
+            continue
         maps.append(v)
     return seeds, maps
 
 
-def seedGenerator(seeds):
+def solver(seeds, maps):
     n = len(seeds)
     pairs = list(zip(seeds[::2], seeds[1::2]))
 
-    res = []
-    for p in pairs:
-        s, c = p
-        _res = [s + i for i in range(c)]
-        res += _res
+    pool = Pool(processes=3)
+    res = pool.starmap(solveP, [(p, maps) for p in pairs])
+
     return res
 
 
-def solver(seeds, maps):
+def solveP(p, maps):
+    s, c = p
+    seeds = [s + i for i in range(c)]
+    ret = min(_solver(seeds, maps))
+    print(ret)
+    return ret
+
+
+def _solver(seeds, maps):
     res = copy.deepcopy(seeds)
 
     for m in maps:
         _reslist = []
-        for _m  in m:
+        for _m in m:
             dst, src, c = _m
             _res = copy.deepcopy(res)
-            for i, s in enumerate(_res):  
-                if s >= src and s <= (src + c) -1:
+            for i, s in enumerate(_res):
+                if s >= src and s <= (src + c) - 1:
                     _res[i] = dst + (s - src)
                 else:
                     _res[i] = s
@@ -62,16 +70,15 @@ def solver(seeds, maps):
                 if e != res[i]:
                     if tres[i] == res[i]:
                         tres[i] = e
-    
-        res  = tres
+
+        res = tres
 
     return res
-             
+
+
 def main():
     data = inputHandler(filePath="./day5/input.txt")
     seeds, maps = mapGenerator(data)
-    seeds = seedGenerator(seeds)
-    print("seeds:", seeds)
     res = solver(seeds, maps)
     print("ans:", min(res))
 
