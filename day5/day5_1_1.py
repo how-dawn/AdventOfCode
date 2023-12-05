@@ -84,10 +84,12 @@ def solver(seeds, maps):
     return res
                 
 def main():
-    data = inputHandler(filePath="./day5/input.txt")
+    data = inputHandler(filePath="./day5/test.txt")
     # print(data)
     seeds, maps = mapGenerator(data)
     print("seeds:", seeds)
+    print("maps:\n", maps)
+    print("\n")
     res = solver(seeds, maps)
     print("res: ", res)
     print("ans:", min(res))

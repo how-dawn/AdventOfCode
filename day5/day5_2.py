@@ -19,7 +19,7 @@ def inputHandler(filePath):
     return data
 
 
-def mapGenerator(data):
+def dataProcessor(data):
     maps = []
     seeds = []
     for k, v in data.items():
@@ -27,60 +27,49 @@ def mapGenerator(data):
             seeds = v[0]
             continue
         maps.append(v)
-    return seeds, maps
-
-
-def solver(seeds, maps):
-    n = len(seeds)
     pairs = list(zip(seeds[::2], seeds[1::2]))
-
-    pool = Pool(processes=3)
-    res = pool.starmap(solveP, [(p, maps) for p in pairs])
-
-    return res
+    pairs = [[s, e] for (s, e) in pairs] 
+    return pairs, maps
 
 
-def solveP(p, maps):
-    s, c = p
-    seeds = [s + i for i in range(c)]
-    ret = min(_solver(seeds, maps))
-    print(ret)
-    return ret
+def solver(pairs, maps):
+    ret = []
+    for p in pairs:
+        ranges = [p]
+        res = []
+        for _m in maps:
+            while ranges:
+                l, u  = ranges.pop()
+                for [d, s, c] in _m:
+                    s_l, s_u = s, s + c
+                    offset = d - s
+                    
+                    if s_u <= l or s_l >=u:
+                        continue
 
+                    if l < s_l:
+                        pairs.append([l, s_l])
+                        l = s_l
+                    
+                    if s_u < u:
+                        pairs.append([s_u, u]) 
+                        u = s_u
+                    
+                    res.append([l + offset, u + offset])
+                res.append([l, u])
+            
+            ranges = res
+            res = []
+        ret += ranges
 
-def _solver(seeds, maps):
-    res = copy.deepcopy(seeds)
-
-    for m in maps:
-        _reslist = []
-        for _m in m:
-            dst, src, c = _m
-            _res = copy.deepcopy(res)
-            for i, s in enumerate(_res):
-                if s >= src and s <= (src + c) - 1:
-                    _res[i] = dst + (s - src)
-                else:
-                    _res[i] = s
-            _reslist.append(_res)
-
-        tres = copy.deepcopy(res)
-
-        for lst in _reslist:
-            for i, e in enumerate(lst):
-                if e != res[i]:
-                    if tres[i] == res[i]:
-                        tres[i] = e
-
-        res = tres
-
-    return res
+    return ret                
 
 
 def main():
-    data = inputHandler(filePath="./day5/input.txt")
-    seeds, maps = mapGenerator(data)
+    data = inputHandler(filePath="./day5/test.txt")
+    seeds, maps = dataProcessor(data)
     res = solver(seeds, maps)
-    print("ans:", min(res))
+    print("ans:", min([r[0] for r in res]))
 
 
 if __name__ == '__main__':
