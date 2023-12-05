@@ -28,7 +28,7 @@ def dataProcessor(data):
             continue
         maps.append(v)
     pairs = list(zip(seeds[::2], seeds[1::2]))
-    pairs = [[s, e] for (s, e) in pairs] 
+    pairs = [[s, s + e] for (s, e) in pairs] 
     return pairs, maps
 
 
@@ -40,7 +40,8 @@ def solver(pairs, maps):
         for _m in maps:
             while ranges:
                 l, u  = ranges.pop()
-                for [d, s, c] in _m:
+                flag = False
+                for (d, s, c) in _m:
                     s_l, s_u = s, s + c
                     offset = d - s
                     
@@ -48,15 +49,19 @@ def solver(pairs, maps):
                         continue
 
                     if l < s_l:
-                        pairs.append([l, s_l])
+                        ranges.append([l, s_l])
                         l = s_l
                     
-                    if s_u < u:
-                        pairs.append([s_u, u]) 
+                    if u > s_u:
+                        ranges.append([s_u, u]) 
                         u = s_u
                     
                     res.append([l + offset, u + offset])
-                res.append([l, u])
+                    flag = True
+                    break
+                
+                if not flag:
+                    res.append([l, u])
             
             ranges = res
             res = []
@@ -66,10 +71,10 @@ def solver(pairs, maps):
 
 
 def main():
-    data = inputHandler(filePath="./day5/test.txt")
+    data = inputHandler(filePath="./day5/input.txt")
     seeds, maps = dataProcessor(data)
     res = solver(seeds, maps)
-    print("ans:", min([r[0] for r in res]))
+    print("ans:", min(r[0] for r in res))
 
 
 if __name__ == '__main__':
