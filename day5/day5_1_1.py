@@ -1,3 +1,4 @@
+import copy
 import re
 
 
@@ -29,13 +30,14 @@ def mapGenerator(data):
     return seeds, maps
 
 def solver(seeds, maps):
-    _reslist = []
-    res = [s for s in seeds]
+    
+    res = copy.deepcopy(seeds)
 
     for m in maps:
+        _reslist = []
         for _m  in m:
             dst, src, c = _m
-            _res = [r for r in res]
+            _res = copy.deepcopy(res)
             for i, s in enumerate(_res):  
                 if s >= src and s <= (src + c) -1:
                     _res[i] = dst + (s - src)
@@ -43,22 +45,34 @@ def solver(seeds, maps):
                     _res[i] = s
             _reslist.append(_res)
 
-        _reslist.reverse()
+        print("res:", res)
         for _ in _reslist:
             print(_)
-        
-       
-        tres = [_ for _ in seeds]
-        for __res in _reslist:
-            for i, e in enumerate(__res):
-                if e != tres[i]:
+
+
+        tres = copy.deepcopy(res)
+
+        for lst in _reslist:
+            for i, e in enumerate(lst):
+                if e != res[i]:
                     if tres[i] == res[i]:
                         tres[i] = e
+        
+        print("--", tres)
+        res  = tres
+        
+       
+        # tres = [_ for _ in res]
+        # for __res in _reslist:
+        #     for i, e in enumerate(__res):
+        #         if e != tres[i]:
+        #             if tres[i] == res[i]:
+        #                 tres[i] = e
                 
                     
-        print("-", tres)
+        # print("-", tres)
         print("=============")
-        res = tres
+        # res = tres
 
         # for i, e in tres:
         #     if e != seeds[i]:
@@ -70,7 +84,7 @@ def solver(seeds, maps):
     return res
                 
 def main():
-    data = inputHandler(filePath="./day5/test.txt")
+    data = inputHandler(filePath="./day5/input.txt")
     # print(data)
     seeds, maps = mapGenerator(data)
     print("seeds:", seeds)
