@@ -45,7 +45,9 @@ std::vector<std::vector<int>> readInput(const std::string &filePath) {
 }
 
 bool isSafe(const std::vector<int> &reportRow) {
-  if (int sz = reportRow.size(); sz < 2) {
+  size_t sz = reportRow.size();
+
+  if (sz < 2) {
     return false;
   }
 
@@ -55,7 +57,7 @@ bool isSafe(const std::vector<int> &reportRow) {
 
   bool isIncreasing = reportRow[1] - reportRow[0] > 0 ? true : false;
 
-  for (auto i = 1; i < reportRow.size(); i++) {
+  for (auto i = 1; i < sz; i++) {
     int diff = reportRow[i] - reportRow[i - 1];
 
     if (diff == 0) {
@@ -92,6 +94,36 @@ int solverP1(const std::vector<std::vector<int>> &report) {
   return cnt;
 }
 
+bool isTolerableSafe(const std::vector<int> &reportRow) {
+  if (isSafe(reportRow)) {
+    return true;
+  }
+
+  size_t sz = reportRow.size();
+  for (size_t i = 0; i < sz; i++) {
+    std::vector<int> reportRow_(reportRow.begin(), reportRow.end());
+    reportRow_.erase(reportRow_.begin() + i);
+    if (isSafe(reportRow_)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int solverP2(const std::vector<std::vector<int>> &report) {
+  int cnt = 0;
+  //   int rowNum = 0;
+  for (const auto row : report) {
+    if (isTolerableSafe(row)) {
+      //   std::cout << "row " << rowNum << " safe" << std::endl;
+      cnt++;
+    }
+    // rowNum++;
+  }
+
+  return cnt;
+}
+
 int main(int argc, char *argv[]) {
   std::string filePath = argv[1];
 
@@ -99,6 +131,9 @@ int main(int argc, char *argv[]) {
 
   int resultP1 = solverP1(input);
   std::cout << "P1 result: " << resultP1 << std::endl;
+
+  int resultP2 = solverP2(input);
+  std::cout << "P2 result: " << resultP2 << std::endl;
 
   return 0;
 }
