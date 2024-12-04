@@ -137,8 +137,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-
-//  g++ -std=c++17 main.cpp -o main
-
-// ./main test.input
-// ./main question.input
