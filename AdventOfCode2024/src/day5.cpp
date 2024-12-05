@@ -6,10 +6,10 @@
 #include <vector>
 #include <sstream>
 
-using OrderRule = std::pair<int, int>;
+using Rule = std::pair<int, int>;
 
 struct InputData {
-    std::vector<OrderRule> rules;
+    std::vector<Rule> rules;
     std::vector<std::vector<int>> updates;
 };
 
@@ -40,10 +40,10 @@ InputData readInput(const std::string &filePath) {
     std::vector<std::string> input;
     std::string line;
     while (std::getline(inputFile, line)) {
-        if (line.find("|") != line.npos) {
+        if (line.find('|') != std::string::npos) {
             auto orders = splitIntegers(line, '|');
-            inputData.rules.push_back({orders[0], orders[1]});
-        } else if (line.find(",") != line.npos) {
+            inputData.rules.emplace_back(orders[0], orders[1]);
+        } else if (line.find(',') != std::string::npos) {
             auto update = splitIntegers(line, ',');
             inputData.updates.push_back(update);
         }
@@ -54,6 +54,20 @@ InputData readInput(const std::string &filePath) {
     return inputData;
 }
 
+bool isOrdered(const std::vector<int>& update, const std::vector<Rule>& rules) {
+    return std::all_of(rules.begin(), rules.end(), [&update](const Rule& rule) {
+        const auto&[a, b] = rule;
+        auto itA = std::find(update.begin(), update.end(), a);
+        auto itB = std::find(update.begin(), update.end(), b);
+        if (itA != update.end() && itB != update.end()) {
+            if (std::distance(itA, itB) < 0) {
+                return false;
+            }
+        }
+        return true;
+    });
+}
+
 int solverP1(const InputData &inputData) {
     int result = 0;
 
@@ -61,21 +75,7 @@ int solverP1(const InputData &inputData) {
     const auto &updates = inputData.updates;
 
     for (const auto &update : updates) {
-        int flag = true;
-        for (const auto &[a, b] : rules) {
-            auto itA = std::find(update.begin(), update.end(), a);
-            auto itB = std::find(update.begin(), update.end(), b);
-            if (itA != update.end() && itB != update.end()) {
-                // std::cout << a << ", " << b << std::endl;
-                int dis = std::distance(itA, itB);
-                if (dis < 0) {
-                    flag = false;
-                    break;
-                }
-            }
-        }
-
-        if (flag) {
+        if (isOrdered(update, rules)) {
             result += update[update.size() / 2];
         }
     }
@@ -83,8 +83,8 @@ int solverP1(const InputData &inputData) {
     return result;
 }
 
-std::vector<int> reorder(std::vector<int> update,
-                         std::vector<OrderRule> rules) {
+std::vector<int> reorder(const std::vector<int>& update,
+                         const std::vector<Rule>& rules) {
     std::vector<int> ret(update.begin(), update.end());
 
     for (int j = 0; j < ret.size() - 1; ++j) {
@@ -94,10 +94,6 @@ std::vector<int> reorder(std::vector<int> update,
                 const auto &[a, b] = rule;
                 if (y == a && x == b) {
                     std::swap(ret[i], ret[i + 1]);
-                    // for (const auto v : ret) {
-                    //   std::cout << v << " ";
-                    // }
-                    // std::cout << std::endl;
                 }
             }
         }
@@ -107,39 +103,21 @@ std::vector<int> reorder(std::vector<int> update,
 
 int solverP2(const InputData &inputData) {
     int result = 0;
-
-    std::vector<std::vector<int>> falseUpdate;
-
     const auto &rules = inputData.rules;
-    const auto &updates = inputData.updates;
+    auto &updates = inputData.updates;
 
     for (const auto &update : updates) {
-        int flag = true;
-        for (const auto &[a, b] : rules) {
-            auto itA = std::find(update.begin(), update.end(), a);
-            auto itB = std::find(update.begin(), update.end(), b);
-            if (itA != update.end() && itB != update.end()) {
-                int dis = std::distance(itA, itB);
-                if (dis < 0) {
-                    flag = false;
-                    break;
-                }
-            }
-        }
-
-        if (!flag) {
+        if (!isOrdered(update, rules)) {
             result += reorder(update, rules)[update.size() / 2];
         }
     }
-
     return result;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
     std::string filePath = argv[1];
 
     auto input = readInput(filePath);
-    // std::cout << "Input: " << input << std::endl;
 
     int resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
