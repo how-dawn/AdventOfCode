@@ -3,12 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <sstream>
 #include <set>
 
 using Coord = std::pair<int, int>;
 using Direction = std::pair<int, int>;
-using PathInfo = std::pair<Coord, Direction>;
+using PathInfo = std::pair<Coord, std::vector<Coord>>;
 
 const std::vector<Direction> directions = {{0,  1},
                                            {-1, 0},
@@ -52,7 +51,7 @@ bool isInMap(const std::vector<std::vector<int>> &map, const Coord &coord) {
     return x >= 0 && x < xSize && y >= 0 && y < ySize;
 }
 
-int bfs(const std::vector<std::vector<int>> &map, const Coord &initCoord) {
+int bfsP1(const std::vector<std::vector<int>> &map, const Coord &initCoord) {
     int result = 0;
 
     std::queue<Coord> q;
@@ -83,7 +82,6 @@ int bfs(const std::vector<std::vector<int>> &map, const Coord &initCoord) {
     }
 
     return result;
-
 }
 
 int solverP1(const std::vector<std::vector<int>> &inputData) {
@@ -92,13 +90,56 @@ int solverP1(const std::vector<std::vector<int>> &inputData) {
         for (auto j = 0; j < inputData.size(); j++) {
             const int val = inputData[i][j];
             if (val == 0) {
-                result += bfs(inputData, {i, j});
+                result += bfsP1(inputData, {i, j});
             }
         }
     }
     return result;
 }
 
+int bfsP2(const std::vector<std::vector<int>> &map, const Coord &initCoord) {
+    int result = 0;
+    std::queue<PathInfo> q;
+    q.push({initCoord, {initCoord}});
+
+    while (!q.empty()) {
+        auto [coord, path] = q.front();
+        q.pop();
+        const auto &[x, y] = coord;
+        const int val = map[x][y];
+        if (val == 9) {
+            result++;
+        }
+
+        for (const auto &[dX, dY]: directions) {
+            Coord newCoord = {x + dX, y + dY};
+            if (!isInMap(map, newCoord)) {
+                continue;
+            }
+            const int newVal = map[x + dX][y + dY];
+
+            if (newVal == val + 1) {
+                path.push_back(newCoord);
+                q.emplace(newCoord, path);
+            }
+        }
+    }
+
+    return result;
+}
+
+int solverP2(const std::vector<std::vector<int>> &inputData) {
+    int result = 0;
+    for (auto i = 0; i < inputData.size(); i++) {
+        for (auto j = 0; j < inputData.size(); j++) {
+            const int val = inputData[i][j];
+            if (val == 0) {
+                result += bfsP2(inputData, {i, j});
+            }
+        }
+    }
+    return result;
+}
 
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
@@ -107,6 +148,8 @@ int main(int argc, char *argv[]) {
     auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
 
+    auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
