@@ -118,7 +118,7 @@ void saveImageToFile(const std::vector<std::vector<int>> &image, const std::stri
     std::ofstream outFile(expandHomePath(filename));
 
     if (!outFile) {
-        std::cerr << "Error: Could not open file: " << filename << std::endl;
+        std::cerr << "Error: Could not open file: " << expandHomePath(filename) << std::endl;
         return;
     }
 
@@ -149,9 +149,11 @@ int solverP2(const std::vector<Robot> &robots, const Size &size) {
             finalPositions.insert(pos);
         }
 
+        std::string filePath = "~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day14/output/day14_easter_egg_" +
+                               std::to_string(time) + ".output";
+        saveImageToFile(generateImage(size, finalPositions), filePath);
+
         if (flag) {
-            saveImageToFile(generateImage(size, finalPositions),
-                            "~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day14/day14_easter_egg.output");
             return time;
         } else {
             time++;
