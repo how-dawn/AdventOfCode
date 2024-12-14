@@ -1,3 +1,9 @@
 *.input
+*.output
 .idea
 build
+
+*.mp4
+*.png
+
+.DS_Store
