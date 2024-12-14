@@ -1,9 +1,11 @@
 *.input
 *.output
-.idea
-build
-
 *.mp4
 *.png
+
+.idea
+.vscode
+.cache
+build
 
 .DS_Store
