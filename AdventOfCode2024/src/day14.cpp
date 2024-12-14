@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <set>
 
 using Position = std::pair<int, int>;
 using Velocity = std::pair<int, int>;
@@ -61,7 +62,6 @@ int solverP1(const std::vector<Robot> &robots, const int time, const Size &size)
     std::vector<Position> finalPositions;
     for (const auto &robot: robots) {
         auto pos = finalPos(time, size, robot);
-//        std::cout << "pos: " << pos.first << ", " << pos.second << std::endl;
         finalPositions.push_back(pos);
     }
 
@@ -80,13 +80,11 @@ int solverP1(const std::vector<Robot> &robots, const int time, const Size &size)
         const auto &[tlX, tlY] = q[0];
         const auto &[brX, brY] = q[1];
 
-//        std::cout << tlX << ", " << tlY << ", " << brX << ", " << brY << std::endl;
         for (const auto &[x, y]: finalPositions) {
             if (x >= tlX && y >= tlY && x <= brX && y <= brY) {
                 cnt++;
             }
         }
-        std::cout << cnt << std::endl;
 
         result *= cnt;
     }
@@ -94,21 +92,84 @@ int solverP1(const std::vector<Robot> &robots, const int time, const Size &size)
     return result;
 }
 
-//int solverP2(const std::vector<Robot> &inputData) {
-//    return 0;
-//}
+std::string expandHomePath(const std::string &path) {
+    if (!path.empty() && path[0] == '~') {
+        const char *home = std::getenv("HOME");
+        if (!home) {
+            std::cerr << "Error: HOME environment variable not set." << std::endl;
+            return path;
+        }
+        return std::string(home) + path.substr(1);
+    }
+    return path;
+}
+
+std::vector<std::vector<int>> generateImage(const Size &size, std::set<Position> &positions) {
+    const auto &[sx, sy] = size;
+    std::vector<std::vector<int>> image(sx, std::vector<int>(sy, 0));
+    for (const auto &[x, y]: positions) {
+        image[x][y] = 1;
+    }
+
+    return image;
+}
+
+void saveImageToFile(const std::vector<std::vector<int>> &image, const std::string &filename) {
+    std::ofstream outFile(expandHomePath(filename));
+
+    if (!outFile) {
+        std::cerr << "Error: Could not open file: " << filename << std::endl;
+        return;
+    }
+
+    for (const auto &row: image) {
+        for (const auto &elem: row) {
+            outFile << elem;
+        }
+        outFile << "\n";
+    }
+
+    outFile.close();
+    if (!outFile.good()) {
+        std::cerr << "Write Error!" << std::endl;
+    }
+}
+
+int solverP2(const std::vector<Robot> &robots, const Size &size) {
+    int time = 0;
+    while (true) {
+        std::set<Position> finalPositions;
+        bool flag = true;
+        for (const auto &robot: robots) {
+            auto pos = finalPos(time, size, robot);
+            if (finalPositions.count(pos)) {
+                flag = false;
+                break;
+            }
+            finalPositions.insert(pos);
+        }
+
+        if (flag) {
+            saveImageToFile(generateImage(size, finalPositions),
+                            "~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day14/day14_easter_egg.output");
+            return time;
+        } else {
+            time++;
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
     auto input = readInput(filePath);
-    
+
     Size size = {101, 103};
     int time = 100;
     auto resultP1 = solverP1(input, time, size);
     std::cout << "P1 result: " << resultP1 << std::endl;
 
-//    auto resultP2 = solverP2(input);
-//    std::cout << "P2 result: " << resultP2 << std::endl;
+    auto resultP2 = solverP2(input, size);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
