@@ -7,10 +7,10 @@
 #include <set>
 #include <map>
 
-
 using Warehouse = std::vector<std::string>;
 using Position = std::pair<int, int>;
 using Direction = std::pair<int, int>;
+using Size = std::pair<int, int>;
 
 const std::map<char, Direction> mvMap = {
         {'>', {0,  1}},
@@ -18,6 +18,42 @@ const std::map<char, Direction> mvMap = {
         {'<', {0,  -1}},
         {'^', {-1, 0}}
 };
+
+namespace Visualization {
+    std::string expandHomePath(const std::string &path) {
+        if (!path.empty() && path[0] == '~') {
+            const char *home = std::getenv("HOME");
+            if (!home) {
+                std::cerr << "Error: HOME environment variable not set." << std::endl;
+                return path;
+            }
+            return std::string(home) + path.substr(1);
+        }
+        return path;
+    }
+
+    void saveWarehouseToFile(const std::vector<std::string> &wh, const std::string &filename) {
+        std::ofstream outFile(expandHomePath(filename));
+
+        if (!outFile) {
+            std::cerr << "Error: Could not open file: " << expandHomePath(filename) << std::endl;
+            return;
+        }
+
+        for (const auto &row: wh) {
+            for (const auto &elem: row) {
+                outFile << elem;
+            }
+            outFile << "\n";
+        }
+
+        outFile.close();
+        if (!outFile.good()) {
+            std::cerr << "Write Error!" << std::endl;
+        }
+    }
+
+}
 
 std::pair<Warehouse, std::string> readInput(const std::string &filePath) {
     if (!std::filesystem::exists(filePath)) {
@@ -380,10 +416,27 @@ int solverP2(const std::pair<Warehouse, std::string> &input) {
     const auto &[warehouse_, movements] = input;
     auto warehouse = updateWarehouse(warehouse_);
     auto rPos = findRobot(warehouse);
+    // visualization
+    {
+        std::string filePath = "~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day15/output/day15_visualization_" +
+                               std::to_string(0) + ".output";
+        Visualization::saveWarehouseToFile(warehouse, filePath);
+    }
 
+    int i = 1;
     for (const auto mv: movements) {
         const auto direction = mvMap.at(mv);
         rPos = moveRobotP2(warehouse, rPos, direction);
+
+        // visualization
+        {
+            std::string filePath =
+                    "~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day15/output/day15_visualization_" +
+                    std::to_string(i) + ".output";
+            Visualization::saveWarehouseToFile(warehouse, filePath);
+            i++;
+        }
+
     }
 
     return getGPSCoordsP2(warehouse);
