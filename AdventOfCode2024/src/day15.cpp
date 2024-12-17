@@ -6,6 +6,8 @@
 #include <unordered_set>
 #include <set>
 #include <map>
+#include <algorithm>
+#include <queue>
 
 using Warehouse = std::vector<std::string>;
 using Position = std::pair<int, int>;

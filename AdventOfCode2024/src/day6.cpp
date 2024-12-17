@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <set>
+#include <vector>
 
 using Coord = std::pair<int, int>;
 using Direction = std::pair<int, int>;

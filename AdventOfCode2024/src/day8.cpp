@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <set>
+#include <vector>
 
 using Coord = std::pair<int, int>;
 
