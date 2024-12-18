@@ -4,6 +4,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <set>
 
 std::pair<std::vector<uint64_t>, std::vector<int>>
 readInput(const std::string &filePath) {
@@ -119,6 +120,24 @@ std::vector<uint64_t> debugDevice(std::vector<uint64_t> &device,
         }
         doDebug(device, opcode, operand, output);
         pIdx += 2;
+
+//        {
+//            // debug print
+//            std::cout << opcode << " | " << operand << " | " << std::bitset<32>(device[0]) << ", "
+//                      << std::bitset<32>(device[1]) << ", " << std::bitset<32>(device[2]) << std::endl;
+//
+//            if (opcode == 5) {
+//                std::cout << "=== In Output: ";
+//                for (auto it = output.begin(); it != output.end(); it++) {
+//                    std::cout << *it;
+//                    if (it != output.end() - 1) {
+//                        std::cout << ",";
+//                    }
+//                }
+//                std::cout << std::endl << std::endl;
+//            }
+//        }
+
     }
     return output;
 }
@@ -141,6 +160,41 @@ solverP1(std::pair<std::vector<uint64_t>, std::vector<int>> &inputData) {
 }
 
 
+uint64_t findA(const std::vector<int> &program) {
+    using State = std::pair<uint64_t, int>; // value, checking index
+    std::queue<State> q;
+    q.emplace(0, 1);
+
+    while (!q.empty()) {
+        auto sz = q.size();
+
+        for (auto i = 0; i < sz; i++) {
+            auto [val, index] = q.front();
+            q.pop();
+
+            if (index == program.size() + 1) {
+                return val;
+            }
+
+            for (int j = 0; j < 8; j++) {
+                uint64_t newVal = val * 8 + j;
+                std::vector<uint64_t> newDevice{newVal, 0, 0};
+                const auto newProgram = debugDevice(newDevice, program);
+
+                if (std::equal(program.end() - index, program.end(), newProgram.begin(), newProgram.end())) {
+                    q.emplace(newVal, index + 1);
+                }
+            }
+        }
+    }
+    return INT64_MAX;
+}
+
+uint64_t solverP2(std::pair<std::vector<uint64_t>, std::vector<int>> &inputData) {
+    auto &[device, program] = inputData;
+    return findA(program);
+}
+
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
     auto input = readInput(filePath);
@@ -149,6 +203,9 @@ int main(int argc, char *argv[]) {
 
     auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
+
+    auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
