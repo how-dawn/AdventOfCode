@@ -44,7 +44,7 @@ def save_image(image, image_output_path):
 
 
 if __name__ == "__main__":
-    base_path = os.path.expanduser('~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day14/')
+    base_path = os.path.expanduser('/data/day14/')
     image_dir = base_path + 'output/'
 
     images = get_images(image_dir)

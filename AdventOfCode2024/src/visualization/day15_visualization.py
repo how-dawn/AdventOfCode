@@ -50,7 +50,7 @@ def write_frame(video_writer, image):
 
 
 if __name__ == "__main__":
-    base_path = os.path.expanduser('~/Workspace/Dev/AdventOfCode/AdventOfCode2024/data/day15/')
+    base_path = os.path.expanduser('/data/day15/')
     file_dir = base_path + 'output/'
 
     texts = get_texts(file_dir)
