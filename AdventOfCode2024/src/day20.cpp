@@ -6,24 +6,18 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <climits>
 #include <cassert>
 
 
 using Direction = std::pair<int, int>;
 using Position = std::pair<int, int>;
+using PositionState = std::pair<Position, int>;
 
 const std::vector<Direction> directions = {
         {0,  1},
         {-1, 0},
         {1,  0},
         {0,  -1}};
-
-const std::vector<Direction> cheatDirections = {
-        {0,  2},
-        {-2, 0},
-        {2,  0},
-        {0,  -2}};
 
 
 std::vector<std::string> readInput(const std::string &filePath) {
@@ -136,9 +130,87 @@ int solverP1(const std::vector<std::string> &inputData) {
     return cheat(inputData, bfs(inputData, startPos, endPos));
 }
 
-//int solverP2(const std::vector<std::string> &inputData) {
-//    return 0;
-//}
+std::map<Position, int> bfsP2(const std::vector<std::string> &map, const Position &curPos, const int maxStep) {
+    std::map<Position, int> record;
+
+    std::queue<PositionState> q;
+    q.emplace(curPos, 0);
+    std::set<Position> visited;
+    visited.insert(curPos);
+
+    while (!q.empty()) {
+        const auto [pos, layer] = q.front();
+        const auto &[x, y] = pos;
+        q.pop();
+
+        if (layer == maxStep && map[x][y] == '#') {
+            continue;
+        }
+
+        if (map[x][y] != '#') {
+            record[pos] = layer;
+        }
+
+        for (const auto &[dx, dy]: directions) {
+            int newX = x + dx;
+            int newY = y + dy;
+            const Position newPos = {newX, newY};
+
+            if (isInMap(map, {newX, newY}) && !visited.count(newPos)) {
+                q.emplace(newPos, layer + 1);
+                visited.insert(newPos);
+            }
+        }
+    }
+
+    return record;
+}
+
+int cheatDistance(const Position &p1, const Position &p2) {
+    const auto &[x1, y1] = p1;
+    const auto &[x2, y2] = p2;
+    return std::abs(x1 - x2) + std::abs(y1 - y2);
+}
+
+int cheatP2(const std::vector<std::string> &map, const std::map<Position, int> &sPathDist, const int maxStep,
+            const int threshold) {
+    std::map<int, int> records;
+
+    // This can be optimized, but I'm too lazy to change the existing code. (❍ᴥ❍ʋ)
+    std::vector<PositionState> sPath(sPathDist.begin(), sPathDist.end());
+    std::sort(sPath.begin(), sPath.end(), [](const PositionState &ps1, const PositionState &ps2) {
+        return ps1.second < ps2.second;
+    });
+
+    for (int i = 0; i < static_cast<int>(sPath.size()); i++) {
+        const auto &[pos1, dist1] = sPath[i];
+        for (int j = i + 1; j < static_cast<int>(sPath.size()); j++) {
+            const auto &[pos2, dist2] = sPath[j];
+
+            const int cheatDist = cheatDistance(pos1, pos2);
+            if (cheatDist > maxStep) { continue; };
+            if (dist1 + cheatDist < dist2) {
+                records[dist2 - dist1 - cheatDist]++;
+            }
+        }
+    }
+
+    int result = 0;
+    for (const auto [k, v]: records) {
+        if (k >= threshold) {
+            result += v;
+        }
+    }
+
+    return result;
+}
+
+int solverP2(const std::vector<std::string> &inputData) {
+    const auto startPos = findInMap(inputData, 'S');
+    const auto endPos = findInMap(inputData, 'E');
+
+    return cheatP2(inputData, bfs(inputData, startPos, endPos), 20, 100);
+}
 
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
@@ -147,8 +219,8 @@ int main(int argc, char *argv[]) {
     auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
 
-//    auto resultP2 = solverP2(input);
-//    std::cout << "P2 result: " << resultP2 << std::endl;
+    auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
