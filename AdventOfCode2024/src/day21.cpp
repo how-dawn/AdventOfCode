@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 using Direction = std::pair<int, int>;
 using Position = std::pair<int, int>;
@@ -114,9 +115,55 @@ uint64_t solverP1(const std::vector<std::string> &inputData) {
     return result;
 }
 
-//uint64_t solverP2(const std::vector<std::string> &inputData) {
-//    return 0;
-//}
+using MemoState = std::pair<std::string, int>;
+
+uint64_t dfsMemo(std::string pwd, int depth, int maxDepth, std::map<MemoState, uint64_t> &memo) {
+    MemoState state = {pwd, depth};
+    if (memo.count(state)) {
+        return memo[state];
+    }
+
+    if (depth > maxDepth) {
+        return pwd.length();
+    }
+    const auto &keypad = depth == 1 ? NumericKeyPad : DirectionalKeyPad;
+
+    pwd = 'A' + pwd;
+    int i = 0, j = 1;
+
+    uint64_t result = 0;
+    while (i < pwd.size() && j < pwd.size()) {
+        auto paths = sp(keypad,
+                        findInMap(keypad, pwd[i]),
+                        findInMap(keypad, pwd[j]));
+
+        auto minVal = std::numeric_limits<uint64_t>::max();
+        for (const auto &path: paths) {
+            minVal = std::min(minVal, dfsMemo(path + 'A', depth + 1, maxDepth, memo));
+        }
+
+        result += minVal;
+
+        i++;
+        j++;
+    }
+
+    memo[state] = result;
+
+    return result;
+}
+
+uint64_t solverP2(const std::vector<std::string> &inputData) {
+    uint64_t result = 0;
+    std::map<MemoState, uint64_t> memo;
+    for (const auto &pwd: inputData) {
+        uint64_t val = std::stoll(pwd.substr(0, pwd.size() - 1));
+        auto spLen = dfsMemo(pwd, 1, 26, memo);
+        result += spLen * val;
+    }
+
+    return result;
+}
 
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
@@ -125,8 +172,8 @@ int main(int argc, char *argv[]) {
     auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
 
-//    auto resultP2 = solverP2(input);
-//    std::cout << "P2 result: " << resultP2 << std::endl;
+    auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
