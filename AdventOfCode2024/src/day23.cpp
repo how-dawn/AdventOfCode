@@ -96,9 +96,76 @@ int solverP1(const std::vector<Connection> &inputData) {
     return result;
 }
 
-//int solverP2(const std::vector<std::string> &inputData) {
-//    return 0;
-//}
+bool canAddToGroup(const Graph &graph, const std::set<std::string> &group, const std::string &newNode) {
+
+    for (const auto &node: group) {
+        if (std::find(graph.at(node).begin(), graph.at(node).end(), newNode) == graph.at(node).end()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+auto cmp = [](const std::set<std::string> &a, const std::set<std::string> &b) {
+    return a.size() < b.size();
+};
+
+void DFS(const Graph &graph, const std::string &node, std::set<std::string> &visited, std::set<std::string> &group,
+         std::set<std::set<std::string>, decltype(cmp)> &groups) {
+
+    visited.insert(node);
+    group.insert(node);
+
+    bool hasAdded = false;
+    for (const auto &v: graph.at(node)) {
+        if (!visited.count(v) && canAddToGroup(graph, group, v)) {
+            hasAdded = true;
+            DFS(graph, v, visited, group, groups);
+        }
+    }
+
+    if (!hasAdded) {
+        groups.insert(group);
+    }
+
+    visited.erase(node);
+    group.erase(node);
+
+}
+
+std::string solverP2(const std::vector<Connection> &inputData) {
+    const auto graph = createGraph(inputData);
+
+
+    std::set<std::string> visited;
+    std::set<std::string> group;
+
+
+    std::set<std::set<std::string>, decltype(cmp)> groups(cmp);
+
+    int t = 0;
+    int total = graph.size();
+    for (const auto &[k, v]: graph) {
+        std::cout << t << "/" << total << std::endl;
+        DFS(graph, k, visited, group, groups);
+        t++;
+    }
+
+
+    std::ostringstream os;
+    const auto &best = *(std::prev(groups.end(), 1));
+    for (auto it = best.begin(); it != best.end(); it++) {
+        os << *it;
+        if (it != std::prev(best.end(), 1)) {
+            os << ",";
+        } else {
+            os << std::endl;
+        }
+    }
+
+    return os.str();
+}
 
 int main(int argc, char *argv[]) {
     const std::string &filePath = argv[1];
@@ -107,8 +174,8 @@ int main(int argc, char *argv[]) {
     auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
 
-//    auto resultP2 = solverP2(input);
-//    std::cout << "P2 result: " << resultP2 << std::endl;
+    auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
     return 0;
 }
