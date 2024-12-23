@@ -9,7 +9,7 @@
 #include <cassert>
 
 using Connection = std::pair<std::string, std::string>;
-using Graph = std::map<std::string, std::vector<std::string>>;
+using Graph = std::map<std::string, std::set<std::string>>;
 
 std::vector<Connection> readInput(const std::string &filePath) {
     auto split = [](const std::string &s, const char delimiter) {
@@ -49,8 +49,8 @@ std::vector<Connection> readInput(const std::string &filePath) {
 Graph createGraph(const std::vector<Connection> &connections) {
     Graph graph;
     for (const auto &[a, b]: connections) {
-        graph[a].push_back(b);
-        graph[b].push_back(a);
+        graph[a].insert(b);
+        graph[b].insert(a);
     }
 
     return graph;
@@ -65,7 +65,7 @@ std::set<std::vector<std::string>> createLANParties(const Graph &graph) {
                 if (k == j || i == j || k == i) {
                     continue;
                 }
-                if (std::find(graph.at(j).begin(), graph.at(j).end(), k) != graph.at(j).end()) {
+                if (graph.at(j).count(k)) {
                     std::vector<std::string> party{k, i, j};
                     std::sort(party.begin(), party.end());
                     LANParties.insert(party);
@@ -96,65 +96,60 @@ int solverP1(const std::vector<Connection> &inputData) {
     return result;
 }
 
-bool canAddToGroup(const Graph &graph, const std::set<std::string> &group, const std::string &newNode) {
-
-    for (const auto &node: group) {
-        if (std::find(graph.at(node).begin(), graph.at(node).end(), newNode) == graph.at(node).end()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 auto cmp = [](const std::set<std::string> &a, const std::set<std::string> &b) {
     return a.size() < b.size();
 };
 
-void DFS(const Graph &graph, const std::string &node, std::set<std::string> &visited, std::set<std::string> &group,
-         std::set<std::set<std::string>, decltype(cmp)> &groups) {
+void
+bronKerbosch(const Graph &graph, std::set<std::string> &candidateNodes,
+             std::set<std::string> &processedExcluded,
+             std::set<std::string> &currentClique, std::set<std::set<std::string>, decltype(cmp)> &cliques) {
+    if (candidateNodes.empty() && processedExcluded.empty()) {
+        cliques.insert(currentClique);
+        return;
+    }
 
-    visited.insert(node);
-    group.insert(node);
+    while (!candidateNodes.empty()) {
+        const auto &v = *candidateNodes.begin();
 
-    bool hasAdded = false;
-    for (const auto &v: graph.at(node)) {
-        if (!visited.count(v) && canAddToGroup(graph, group, v)) {
-            hasAdded = true;
-            DFS(graph, v, visited, group, groups);
+        std::set<std::string> newClique = currentClique;
+        newClique.insert(v);
+
+        std::set<std::string> newCandidates;
+        for (const auto &c: candidateNodes) {
+            if (graph.at(v).count(c)) {
+                newCandidates.insert(c);
+            }
         }
+
+        std::set<std::string> newProcessedExcluded;
+        for (const auto &node: processedExcluded) {
+            if (graph.at(v).count(node)) {
+                newProcessedExcluded.insert(node);
+            }
+        }
+        bronKerbosch(graph, newCandidates, newProcessedExcluded, newClique, cliques);
+        candidateNodes.erase(v);
+        processedExcluded.insert(v);
     }
-
-    if (!hasAdded) {
-        groups.insert(group);
-    }
-
-    visited.erase(node);
-    group.erase(node);
-
 }
 
 std::string solverP2(const std::vector<Connection> &inputData) {
     const auto graph = createGraph(inputData);
 
-
-    std::set<std::string> visited;
-    std::set<std::string> group;
-
-
-    std::set<std::set<std::string>, decltype(cmp)> groups(cmp);
-
-    int t = 0;
-    int total = graph.size();
-    for (const auto &[k, v]: graph) {
-        std::cout << t << "/" << total << std::endl;
-        DFS(graph, k, visited, group, groups);
-        t++;
+    std::set<std::string> candidateNodes;
+    for (const auto &[k, _]: graph) {
+        candidateNodes.insert(k);
     }
 
+    std::set<std::string> processedExcluded;
+    std::set<std::string> currentClique;
+    std::set<std::set<std::string>, decltype(cmp)> cliques(cmp);
+
+    bronKerbosch(graph, candidateNodes, processedExcluded, currentClique, cliques);
 
     std::ostringstream os;
-    const auto &best = *(std::prev(groups.end(), 1));
+    const auto &best = *(std::prev(cliques.end(), 1));
     for (auto it = best.begin(); it != best.end(); it++) {
         os << *it;
         if (it != std::prev(best.end(), 1)) {
