@@ -55,24 +55,58 @@ bool isValidID(const std::string &id) {
     return true;
 }
 
-void getInValidIds(const std::string& start, const std::string& end, std::set<int64_t>& ids) {
-    for (int64_t i = std::stoll(start); i <= std::stoll(end); i++) {
-        if (!isValidID(std::to_string(i))) {
-            std::cout << i << std::endl;
+bool isValidID_P2(const std::string &id) {
+    auto ssize = id.length();
+
+    for (auto l = 1; l <= ssize/2; l++) {
+        std::vector<std::string> parts;
+        for (auto i =0; i < ssize; i+=l) {
+            parts.push_back(id.substr(i, l));
         }
-        if (auto val = std::to_string(i); !isValidID(val)) {
+
+        bool repeating = true;
+        auto val = parts.front();
+        for (const auto &part: parts) {
+            if (part!=val) {
+                repeating = false;
+                break;
+            }
+        }
+        if (repeating) { return false;}
+    }
+
+    return true;
+}
+
+void getInValidIds(const std::string& start, const std::string& end, std::set<int64_t>& ids, const std::function<bool(const std::string&)>& func) {
+    for (int64_t i = std::stoll(start); i <= std::stoll(end); i++) {
+        if (auto val = std::to_string(i); !func(val)) {
             ids.insert(i);
         }
     }
 }
 
 
-int64_t solverP1(const std::vector<std::pair<std::string, std::string>>& input ) {
+int64_t solverP1(const std::vector<std::pair<std::string, std::string>>& input) {
     int64_t res = 0LL;
 
     std::set<int64_t> invalidIDs;
     for (const auto &[start, end] : input) {
-         getInValidIds(start, end, invalidIDs);
+         getInValidIds(start, end, invalidIDs,isValidID);
+    }
+
+    for (const auto id : invalidIDs) {
+        res += id;
+    }
+    return res;
+}
+
+int64_t solverP2(const std::vector<std::pair<std::string, std::string>>& input) {
+    int64_t res = 0LL;
+
+    std::set<int64_t> invalidIDs;
+    for (const auto &[start, end] : input) {
+        getInValidIds(start, end, invalidIDs,isValidID_P2);
     }
 
     for (const auto id : invalidIDs) {
@@ -82,6 +116,8 @@ int64_t solverP1(const std::vector<std::pair<std::string, std::string>>& input )
 }
 
 
+
+
 int main(int argc, char *argv[]) {
     const std::string filePath = argv[1];
 
@@ -89,6 +125,9 @@ int main(int argc, char *argv[]) {
 
     const auto resultP1 = solverP1(input);
     std::cout << "P1 result: " << resultP1 << std::endl;
+
+    const auto resultP2 = solverP2(input);
+    std::cout << "P2 result: " << resultP2 << std::endl;
 
 
     return 0;
